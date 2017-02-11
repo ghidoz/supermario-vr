@@ -10,7 +10,7 @@ var vrDisplay;
 var boxSize = 30;
 // Various global THREE.Objects.
 var scene;
-var cube;
+var coin;
 var controls;
 var effect;
 var camera;
@@ -79,16 +79,13 @@ function onLoad() {
     var loader = new THREE.TextureLoader();
     loader.load('img/box.png', onTextureLoaded);
 
-    // Create 3D objects.
-    var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-    var material = new THREE.MeshNormalMaterial();
-    cube = new THREE.Mesh(geometry, material);
-
-    // Position cube mesh to be right in front of you.
-    cube.position.set(0, controls.userHeight, -1);
-
-    // Add cube mesh to your three.js scene
-    scene.add(cube);
+    var loader = new THREE.ColladaLoader();
+    loader.options.convertUpAxis = true;
+    loader.load('models/coin.dae', function (collada) {
+        coin = collada.scene;
+        coin.position.set(0, controls.userHeight, -1);
+        scene.add(coin);
+    });
 
     window.addEventListener('resize', onResize, true);
     window.addEventListener('vrdisplaypresentchange', onResize, true);
@@ -157,8 +154,8 @@ function animate(timestamp) {
     var delta = Math.min(timestamp - lastRenderTime, 500);
     lastRenderTime = timestamp;
 
-    // Apply rotation to cube mesh
-    cube.rotation.y += delta * 0.0006;
+    // Apply rotation to coin
+    coin.rotation.y += delta * 0.0006;
 
     // Only update controls if we're presenting.
     if (vrButton.isPresenting()) {
@@ -203,8 +200,8 @@ function setStageDimensions(stage) {
     skybox.position.y = boxSize/2;
     scene.add(skybox);
 
-    // Place the cube in the middle of the scene, at user height.
-    cube.position.set(0, controls.userHeight, 0);
+    // Place the star in the middle of the scene, at user height.
+    coin.position.set(0, controls.userHeight, 0);
 }
 
 function moveOnKeydown(evt) {
