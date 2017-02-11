@@ -69,6 +69,8 @@ function onLoad() {
     dollyCam.add(camera);
     scene.add(dollyCam);
 
+    addLights();
+
     // Apply VR stereo rendering to renderer.
     effect = new THREE.VREffect(renderer);
     effect.setSize(window.innerWidth, window.innerHeight);
@@ -115,6 +117,14 @@ function onLoad() {
 
     window.addEventListener('keydown', moveOnKeydown, false);
     window.addEventListener('keyup', stopOnKeyup, false);
+}
+
+function addLights() {
+    var dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(100, 100, 50);
+    scene.add(dirLight);
+    var ambLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambLight);
 }
 
 function onTextureLoaded(texture) {
