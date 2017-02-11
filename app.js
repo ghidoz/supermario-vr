@@ -9,6 +9,7 @@ var vrDisplay;
 // How big of a box to render.
 var boxSize = 30;
 // Various global THREE.Objects.
+var renderer;
 var scene;
 var coin;
 var controls;
@@ -28,35 +29,45 @@ var keys = {
 };
 var moving = false;
 
-if (isVr) {
-    firebase.database().ref('moving').on('value', function (snapshot) {
-        keys = snapshot.val();
-        if (keys.moving) {
-            startMoving();
-        } else {
-            stopMoving();
-        }
-    });
-}
-
 var moveVector = new THREE.Vector3();
 var leftVector = new THREE.Vector3();
 var scratchVector = new THREE.Vector3();
 var leftRotateMatrix = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3( 0, 1, 0 ), Math.PI / 2);
 
 function onLoad() {
-    // Setup three.js WebGL renderer. Note: Antialiasing is a big performance hit.
-    // Only enable it if you actually need to.
-    var renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setPixelRatio(window.devicePixelRatio);
-
-    // Append the canvas element created by the renderer to document body element.
     document.body.appendChild(renderer.domElement);
 
-    // Create a three.js scene.
-    scene = new THREE.Scene();
+    getMoving();
 
-    // Create a three.js camera.
+    scene = new THREE.Scene();
+    setCamera();
+    addLights();
+    addSceneElements();
+
+    initWebVR();
+
+    window.addEventListener('resize', onResize, true);
+    window.addEventListener('vrdisplaypresentchange', onResize, true);
+    window.addEventListener('keydown', moveOnKeydown, false);
+    window.addEventListener('keyup', stopOnKeyup, false);
+}
+
+function getMoving() {
+    if (isVr) {
+        firebase.database().ref('moving').on('value', function (snapshot) {
+            keys = snapshot.val();
+            if (keys.moving) {
+                startMoving();
+            } else {
+                stopMoving();
+            }
+        });
+    }
+}
+
+function setCamera() {
     var aspect = window.innerWidth / window.innerHeight;
     camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 10000);
 
@@ -68,13 +79,9 @@ function onLoad() {
     dollyCam.position.set( 0, 0, 0 );
     dollyCam.add(camera);
     scene.add(dollyCam);
+}
 
-    addLights();
-
-    // Apply VR stereo rendering to renderer.
-    effect = new THREE.VREffect(renderer);
-    effect.setSize(window.innerWidth, window.innerHeight);
-
+function addSceneElements() {
     // Add a repeating grid as a skybox.
     var loader = new THREE.TextureLoader();
     loader.load('img/box.png', onTextureLoaded);
@@ -86,11 +93,17 @@ function onLoad() {
         coin.position.set(0, controls.userHeight, -1);
         scene.add(coin);
     });
+}
 
-    window.addEventListener('resize', onResize, true);
-    window.addEventListener('vrdisplaypresentchange', onResize, true);
+function addLights() {
+    var dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(100, 100, 50);
+    scene.add(dirLight);
+    var ambLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambLight);
+}
 
-    // Initialize the WebVR UI.
+function initWebVR() {
     var uiOptions = {
         color: 'black',
         background: 'white',
@@ -111,17 +124,9 @@ function onLoad() {
     document.getElementById('magic-window').addEventListener('click', function() {
         vrButton.requestEnterFullscreen();
     });
-
-    window.addEventListener('keydown', moveOnKeydown, false);
-    window.addEventListener('keyup', stopOnKeyup, false);
-}
-
-function addLights() {
-    var dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    dirLight.position.set(100, 100, 50);
-    scene.add(dirLight);
-    var ambLight = new THREE.AmbientLight(0x404040);
-    scene.add(ambLight);
+    // Apply VR stereo rendering to renderer.
+    effect = new THREE.VREffect(renderer);
+    effect.setSize(window.innerWidth, window.innerHeight);
 }
 
 function onTextureLoaded(texture) {
@@ -145,8 +150,6 @@ function onTextureLoaded(texture) {
     // parameters provided.
     setupStage();
 }
-
-
 
 // Request animation frame loop function
 function animate(timestamp) {
