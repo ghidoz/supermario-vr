@@ -1,3 +1,5 @@
+var MOVE_SPEED = 1;
+
 // Last time the scene was rendered.
 var lastRenderTime = 0;
 // Currently active VRDisplay.
@@ -10,9 +12,26 @@ var cube;
 var controls;
 var effect;
 var camera;
+var dollyCam;
 // EnterVRButton for rendering enter/exit UI.
 var vrButton;
+var clock = new THREE.Clock();
 
+var keys = {
+    forward: false,
+    left: false,
+    backward: false,
+    right: false,
+    w: false,
+    a: false,
+    s: false,
+    d: false
+};
+var moving = false;
+var moveVector = new THREE.Vector3();
+var leftVector = new THREE.Vector3();
+var scratchVector = new THREE.Vector3();
+var leftRotateMatrix = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3( 0, 1, 0 ), Math.PI / 2);
 
 function onLoad() {
     // Setup three.js WebGL renderer. Note: Antialiasing is a big performance hit.
@@ -33,6 +52,11 @@ function onLoad() {
     controls = new THREE.VRControls(camera);
     controls.standing = true;
     camera.position.y = controls.userHeight;
+
+    dollyCam = new THREE.Group();
+    dollyCam.position.set( 0, 0, 0 );
+    dollyCam.add(camera);
+    scene.add(dollyCam);
 
     // Apply VR stereo rendering to renderer.
     effect = new THREE.VREffect(renderer);
@@ -77,6 +101,9 @@ function onLoad() {
     document.getElementById('magic-window').addEventListener('click', function() {
         vrButton.requestEnterFullscreen();
     });
+
+    window.addEventListener('keydown', moveOnKeydown, false);
+    window.addEventListener('keyup', stopOnKeyup, false);
 }
 
 function onTextureLoaded(texture) {
@@ -105,6 +132,7 @@ function onTextureLoaded(texture) {
 
 // Request animation frame loop function
 function animate(timestamp) {
+    updatePosition();
     var delta = Math.min(timestamp - lastRenderTime, 500);
     lastRenderTime = timestamp;
 
@@ -156,6 +184,79 @@ function setStageDimensions(stage) {
 
     // Place the cube in the middle of the scene, at user height.
     cube.position.set(0, controls.userHeight, 0);
+}
+
+function moveOnKeydown(evt) {
+    console.log('keydown', evt.keyCode);
+    if (evt.keyCode === 38) { //up
+        keys.forward = true;
+        startMoving();
+    } else if (evt.keyCode === 40) { //down
+        keys.backward = true;
+        startMoving();
+    } else if (evt.keyCode === 37) { //left
+        keys.left = true;
+        startMoving();
+    } else if (evt.keyCode === 39) { //right
+        keys.right = true;
+        startMoving();
+    }
+}
+
+function stopOnKeyup(evt) {
+    if (evt.keyCode === 38) { //up
+        keys.forward = false;
+        stopMoving();
+    } else if (evt.keyCode === 40) { //down
+        keys.backward = false;
+        stopMoving();
+    } else if (evt.keyCode === 37) { //left
+        keys.left = false;
+        stopMoving();
+    } else if (evt.keyCode === 39) { //right
+        keys.right = false;
+        stopMoving();
+    }
+}
+
+function startMoving() {
+    if (!moving) {
+        // start moving in whichever direction the camera is looking
+        moveVector.set(0, 0, 1).applyQuaternion(camera.quaternion);
+
+        //only move along the ground
+        moveVector.setY(0).normalize();
+
+        leftVector.copy(moveVector).applyMatrix4(leftRotateMatrix);
+        moving = true;
+    }
+}
+
+function stopMoving() {
+    updatePosition();
+    moving = false;
+}
+
+function updatePosition() {
+    var delta = clock.getDelta();
+
+    if (moving) {
+        if (keys.forward) {
+            scratchVector.copy(moveVector).multiplyScalar(-delta * MOVE_SPEED);
+            dollyCam.position.add(scratchVector);
+        } else if (keys.backward) {
+            scratchVector.copy(moveVector).multiplyScalar(delta * MOVE_SPEED);
+            dollyCam.position.add(scratchVector);
+        }
+
+        if (keys.left) {
+            scratchVector.copy(leftVector).multiplyScalar(-delta * MOVE_SPEED);
+            dollyCam.position.add(scratchVector);
+        } else if (keys.right) {
+            scratchVector.copy(leftVector).multiplyScalar(delta * MOVE_SPEED);
+            dollyCam.position.add(scratchVector);
+        }
+    }
 }
 
 window.addEventListener('load', onLoad);
