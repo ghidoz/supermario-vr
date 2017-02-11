@@ -1,5 +1,7 @@
 var MOVE_SPEED = 1;
 
+var isVr = window.location.hash === '#VR';
+
 // Last time the scene was rendered.
 var lastRenderTime = 0;
 // Currently active VRDisplay.
@@ -22,12 +24,21 @@ var keys = {
     left: false,
     backward: false,
     right: false,
-    w: false,
-    a: false,
-    s: false,
-    d: false
+    moving: false
 };
 var moving = false;
+
+if (isVr) {
+    firebase.database().ref('moving').on('value', function (snapshot) {
+        keys = snapshot.val();
+        if (keys.moving) {
+            startMoving();
+        } else {
+            stopMoving();
+        }
+    });
+}
+
 var moveVector = new THREE.Vector3();
 var leftVector = new THREE.Vector3();
 var scratchVector = new THREE.Vector3();
@@ -187,7 +198,6 @@ function setStageDimensions(stage) {
 }
 
 function moveOnKeydown(evt) {
-    console.log('keydown', evt.keyCode);
     if (evt.keyCode === 38) { //up
         keys.forward = true;
         startMoving();
@@ -229,12 +239,16 @@ function startMoving() {
 
         leftVector.copy(moveVector).applyMatrix4(leftRotateMatrix);
         moving = true;
+        keys.moving = true;
     }
+    updateMoving();
 }
 
 function stopMoving() {
     updatePosition();
     moving = false;
+    keys.moving = false;
+    updateMoving();
 }
 
 function updatePosition() {
@@ -256,6 +270,12 @@ function updatePosition() {
             scratchVector.copy(leftVector).multiplyScalar(delta * MOVE_SPEED);
             dollyCam.position.add(scratchVector);
         }
+    }
+}
+
+function updateMoving() {
+    if (!isVr) {
+        firebase.database().ref('moving').set(keys);
     }
 }
 
