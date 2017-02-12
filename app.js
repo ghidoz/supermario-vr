@@ -8,6 +8,7 @@ var lastRenderTime = 0;
 var vrDisplay;
 // How big of a box to render.
 var boxSize = 30;
+var maxBounding = (boxSize / 2) - 1;
 // Various global THREE.Objects.
 var renderer;
 var scene;
@@ -90,7 +91,7 @@ function setCamera() {
 function addSceneElements() {
     // Add a repeating grid as a skybox.
     var loader = new THREE.TextureLoader();
-    loader.load('img/box.png', onTextureLoaded);
+    loader.load('img/box.png', addSkybox);
 
     var loader = new THREE.ColladaLoader();
     loader.options.convertUpAxis = true;
@@ -106,13 +107,19 @@ function addEnemies() {
     loader.options.convertUpAxis = true;
     loader.load('models/goomba.dae', function (collada) {
         goomba = collada.scene;
-        var max = (boxSize / 2) - 1;
-        var x = Math.floor(Math.random() * max) - max;
-        var z = Math.floor(Math.random() * max) - max;
+        var x = Math.floor(Math.random() * maxBounding) - maxBounding;
+        var z = Math.floor(Math.random() * maxBounding) - maxBounding;
         goomba.position.set(x, 0, z);
         scene.add(goomba);
         goombaDirection = new THREE.Vector3(0.015, 0, 0.025);
+        lookAtDirection(goomba, goombaDirection);
     });
+}
+
+function lookAtDirection(object, vector) {
+    var lookAt = new THREE.Vector3();
+    lookAt.addVectors(vector, object.position);
+    object.lookAt(lookAt);
 }
 
 function addLights() {
@@ -161,7 +168,7 @@ function initWebVR() {
     effect.setSize(window.innerWidth, window.innerHeight);
 }
 
-function onTextureLoaded(texture) {
+function addSkybox(texture) {
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set(boxSize, boxSize);
@@ -192,26 +199,8 @@ function animate(timestamp) {
     // Apply rotation to coin
     coin.rotation.y += delta * 0.0006 * 5;
 
-    var dist = 1.61;
-    var max = (boxSize / 2) - 1;
-    if( dollyCam.position.distanceTo(coin.position) < dist) {
-        var x = Math.floor(Math.random() * max) - max;
-        var z = Math.floor(Math.random() * max) - max;
-        coin.position.set(x, controls.userHeight, z);
-        coinAudio.play();
-    }
-
-    if (goomba.position.x > max || goomba.position.x < -max || goomba.position.z > max || goomba.position.z < -max) {
-        var signX = (goomba.position.x > max || goomba.position.x < -max ? -1 : 1) * Math.sign(goombaDirection.x);
-        var signZ = (goomba.position.z > max || goomba.position.z < -max ? -1 : 1) * Math.sign(goombaDirection.z);
-        var x = Math.random() * (0.025 - 0.015) + 0.015;
-        var z = Math.random() * (0.025 - 0.015) + 0.015;
-        goombaDirection = new THREE.Vector3(x * signX, 0, z * signZ);
-        var lookAt = new THREE.Vector3();
-        lookAt.addVectors(goombaDirection, goomba.position);
-        goomba.lookAt(lookAt);
-    }
-    goomba.position.add(goombaDirection);
+    handleGetCoin();
+    handleEnemyCollision();
 
     // Only update controls if we're presenting.
     if (vrButton.isPresenting()) {
@@ -221,6 +210,28 @@ function animate(timestamp) {
     effect.render(scene, camera);
 
     vrDisplay.requestAnimationFrame(animate);
+}
+
+function handleGetCoin() {
+    var dist = 1.61;
+    if( dollyCam.position.distanceTo(coin.position) < dist) {
+        var x = Math.floor(Math.random() * maxBounding) - maxBounding;
+        var z = Math.floor(Math.random() * maxBounding) - maxBounding;
+        coin.position.set(x, controls.userHeight, z);
+        coinAudio.play();
+    }
+}
+
+function handleEnemyCollision() {
+    if (goomba.position.x > maxBounding || goomba.position.x < -maxBounding || goomba.position.z > maxBounding || goomba.position.z < -maxBounding) {
+        var signX = (goomba.position.x > maxBounding || goomba.position.x < -maxBounding ? -1 : 1) * Math.sign(goombaDirection.x);
+        var signZ = (goomba.position.z > maxBounding || goomba.position.z < -maxBounding ? -1 : 1) * Math.sign(goombaDirection.z);
+        var x = Math.random() * (0.025 - 0.015) + 0.015;
+        var z = Math.random() * (0.025 - 0.015) + 0.015;
+        goombaDirection = new THREE.Vector3(x * signX, 0, z * signZ);
+        lookAtDirection(goomba, goombaDirection);
+    }
+    goomba.position.add(goombaDirection);
 }
 
 function onResize(e) {
