@@ -18,6 +18,9 @@ var controls;
 var effect;
 var camera;
 var dollyCam;
+var font;
+var score = 0;
+var scoreCounter;
 // EnterVRButton for rendering enter/exit UI.
 var vrButton;
 var coinAudio;
@@ -52,6 +55,7 @@ function onLoad() {
     addLights();
     addSceneElements();
     addEnemies();
+    addScoreCounter();
 
     initWebVR();
 
@@ -214,6 +218,34 @@ function addSkybox(texture) {
     setupStage();
 }
 
+function addScoreCounter() {
+    var loader = new THREE.FontLoader();
+    loader.load( 'node_modules/three/examples/fonts/helvetiker_regular.typeface.json', function ( f ) {
+        font = f;
+        updateScore();
+    });
+}
+
+function updateScore() {
+    if (scoreCounter) {
+        scene.remove(scoreCounter);
+    }
+    var geometry = new THREE.TextGeometry( 'SCORE: ' + score, {
+        font: font,
+        size: 1, // font size
+        height: 0.1, // how much extrusion (how thick / deep are the letters)
+    });
+    geometry.computeBoundingBox();
+    var material = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0xffffff } );
+    scoreCounter = new THREE.Mesh( geometry, material );
+    scoreCounter.position.x =  - geometry.boundingBox.max.x / 2;
+    scoreCounter.position.y = maxBounding / 2;
+    scoreCounter.position.z = -(maxBounding + 1);
+    scoreCounter.castShadow = true;
+    scoreCounter.receiveShadow = true;
+    scene.add( scoreCounter );
+}
+
 // Request animation frame loop function
 function animate(timestamp) {
     updatePosition();
@@ -242,6 +274,8 @@ function handleGetCoin() {
         var x = Math.floor(Math.random() * maxBounding) - maxBounding;
         var z = Math.floor(Math.random() * maxBounding) - maxBounding;
         coin.position.set(x, controls.userHeight, z);
+        score++;
+        updateScore();
         coinAudio.play();
     }
 }
