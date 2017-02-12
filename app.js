@@ -158,7 +158,15 @@ function animate(timestamp) {
     lastRenderTime = timestamp;
 
     // Apply rotation to coin
-    coin.rotation.y += delta * 0.0006;
+    coin.rotation.y += delta * 0.0006 * 5;
+
+    var dist = 1.61;
+    if( dollyCam.position.distanceTo(coin.position) < dist) {
+        var max = (boxSize / 2) - 1;
+        var x = Math.floor(Math.random() * max) - max;
+        var z = Math.floor(Math.random() * max) - max;
+        coin.position.set(x, controls.userHeight, z);
+    }
 
     // Only update controls if we're presenting.
     if (vrButton.isPresenting()) {
