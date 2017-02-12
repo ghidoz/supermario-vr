@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <title>Pad</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <style>
+        body {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #fff;
+            margin: 0px;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+<div id="x"></div>
+<div id="y"></div>
+<div id="z"></div>
+<div id="direction">STOP</div>
+</body>
+
+<script src="https://www.gstatic.com/firebasejs/3.6.9/firebase.js"></script>
+<script>
+    var config = {
+        apiKey: "AIzaSyBM8z3CVw6S8QZfnnT9cvs7T2ta2jKRpV8",
+        authDomain: "vrcontrols-b6c2a.firebaseapp.com",
+        databaseURL: "https://vrcontrols-b6c2a.firebaseio.com",
+        storageBucket: "vrcontrols-b6c2a.appspot.com",
+        messagingSenderId: "279179286884"
+    };
+    firebase.initializeApp(config);
+</script>
+
+<script src="pad.js"></script>
+
+</html>
