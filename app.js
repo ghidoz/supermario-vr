@@ -12,6 +12,7 @@ var boxSize = 30;
 var renderer;
 var scene;
 var coin;
+var goomba;
 var controls;
 var effect;
 var camera;
@@ -35,6 +36,8 @@ var leftVector = new THREE.Vector3();
 var scratchVector = new THREE.Vector3();
 var leftRotateMatrix = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3( 0, 1, 0 ), Math.PI / 2);
 
+var goombaDirection;
+
 function onLoad() {
     renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -47,6 +50,7 @@ function onLoad() {
     setCamera();
     addLights();
     addSceneElements();
+    addEnemies();
 
     initWebVR();
 
@@ -94,6 +98,20 @@ function addSceneElements() {
         coin = collada.scene;
         coin.position.set(0, controls.userHeight, -1);
         scene.add(coin);
+    });
+}
+
+function addEnemies() {
+    var loader = new THREE.ColladaLoader();
+    loader.options.convertUpAxis = true;
+    loader.load('models/goomba.dae', function (collada) {
+        goomba = collada.scene;
+        var max = (boxSize / 2) - 1;
+        var x = Math.floor(Math.random() * max) - max;
+        var z = Math.floor(Math.random() * max) - max;
+        goomba.position.set(x, 0, z);
+        scene.add(goomba);
+        goombaDirection = new THREE.Vector3(0.015, 0, 0.025);
     });
 }
 
@@ -175,13 +193,25 @@ function animate(timestamp) {
     coin.rotation.y += delta * 0.0006 * 5;
 
     var dist = 1.61;
+    var max = (boxSize / 2) - 1;
     if( dollyCam.position.distanceTo(coin.position) < dist) {
-        var max = (boxSize / 2) - 1;
         var x = Math.floor(Math.random() * max) - max;
         var z = Math.floor(Math.random() * max) - max;
         coin.position.set(x, controls.userHeight, z);
         coinAudio.play();
     }
+
+    if (goomba.position.x > max || goomba.position.x < -max || goomba.position.z > max || goomba.position.z < -max) {
+        var signX = (goomba.position.x > max || goomba.position.x < -max ? -1 : 1) * Math.sign(goombaDirection.x);
+        var signZ = (goomba.position.z > max || goomba.position.z < -max ? -1 : 1) * Math.sign(goombaDirection.z);
+        var x = Math.random() * (0.025 - 0.015) + 0.015;
+        var z = Math.random() * (0.025 - 0.015) + 0.015;
+        goombaDirection = new THREE.Vector3(x * signX, 0, z * signZ);
+        var lookAt = new THREE.Vector3();
+        lookAt.addVectors(goombaDirection, goomba.position);
+        goomba.lookAt(lookAt);
+    }
+    goomba.position.add(goombaDirection);
 
     // Only update controls if we're presenting.
     if (vrButton.isPresenting()) {
