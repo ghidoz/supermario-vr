@@ -1,7 +1,7 @@
 {
-  "name": "webvr-boilerplate",
-  "version": "0.5.0",
-  "description": "A starting point for cross-platform web-based VR experiences.",
+  "name": "supermario-vr",
+  "version": "0.1.0",
+  "description": "A VR world where collect Super Mario coins!",
   "main": "index.html",
   "dependencies": {
     "es6-promise": "latest",
@@ -16,13 +16,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/googlevr/webvr-boilerplate.git"
+    "url": "git+https://github.com/ghidoz/supermario-vr"
   },
-  "keywords": ["vr"],
-  "author": "Boris Smus <boris@smus.com>",
+  "keywords": ["vr", "super mario"],
+  "author": "Daniele Ghidoli",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/googlevr/webvr-boilerplate/issues"
+    "url": "https://github.com/ghidoz/supermario-vr/issues"
   },
-  "homepage": "https://github.com/googlevr/webvr-boilerplate#readme"
+  "homepage": "https://github.com/ghidoz/supermario-vr#readme"
 }
