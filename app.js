@@ -18,6 +18,7 @@ var camera;
 var dollyCam;
 // EnterVRButton for rendering enter/exit UI.
 var vrButton;
+var coinAudio;
 var clock = new THREE.Clock();
 
 var keys = {
@@ -40,6 +41,7 @@ function onLoad() {
     document.body.appendChild(renderer.domElement);
 
     getMoving();
+    loadSounds();
 
     scene = new THREE.Scene();
     setCamera();
@@ -101,6 +103,18 @@ function addLights() {
     scene.add(dirLight);
     var ambLight = new THREE.AmbientLight(0x404040);
     scene.add(ambLight);
+}
+
+function loadSounds() {
+    coinAudio = new Audio('sounds/coin.wav');
+    coinAudio.addEventListener('play', function () {
+        coinAudio.pause();
+        coinAudio.removeEventListener('play', arguments.callee, false);
+    }, false);
+    window.addEventListener("touchstart", function() {
+        window.removeEventListener('touchstart', arguments.callee, false);
+        coinAudio.play();
+    }, false);
 }
 
 function initWebVR() {
@@ -166,6 +180,7 @@ function animate(timestamp) {
         var x = Math.floor(Math.random() * max) - max;
         var z = Math.floor(Math.random() * max) - max;
         coin.position.set(x, controls.userHeight, z);
+        coinAudio.play();
     }
 
     // Only update controls if we're presenting.
