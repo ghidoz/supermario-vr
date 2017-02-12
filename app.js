@@ -24,6 +24,7 @@ var scoreCounter;
 // EnterVRButton for rendering enter/exit UI.
 var vrButton;
 var coinAudio;
+var powerdownAudio;
 var clock = new THREE.Clock();
 
 var keys = {
@@ -160,13 +161,19 @@ function addLights() {
 
 function loadSounds() {
     coinAudio = new Audio('sounds/coin.wav');
+    powerdownAudio = new Audio('sounds/power-down.wav');
     coinAudio.addEventListener('play', function () {
         coinAudio.pause();
         coinAudio.removeEventListener('play', arguments.callee, false);
     }, false);
+    powerdownAudio.addEventListener('play', function () {
+        powerdownAudio.pause();
+        powerdownAudio.removeEventListener('play', arguments.callee, false);
+    }, false);
     window.addEventListener("touchstart", function() {
         window.removeEventListener('touchstart', arguments.callee, false);
         coinAudio.play();
+        powerdownAudio.play();
     }, false);
 }
 
@@ -256,7 +263,8 @@ function animate(timestamp) {
     coin.rotation.y += delta * 0.0006 * 5;
 
     handleGetCoin();
-    handleEnemyCollision();
+    handleEnemyWallCollision();
+    handleCollisionWithEnemy();
 
     // Only update controls if we're presenting.
     if (vrButton.isPresenting()) {
@@ -280,7 +288,7 @@ function handleGetCoin() {
     }
 }
 
-function handleEnemyCollision() {
+function handleEnemyWallCollision() {
     if (goomba.position.x > maxBounding || goomba.position.x < -maxBounding || goomba.position.z > maxBounding || goomba.position.z < -maxBounding) {
         var signX = (goomba.position.x > maxBounding || goomba.position.x < -maxBounding ? -1 : 1) * Math.sign(goombaDirection.x);
         var signZ = (goomba.position.z > maxBounding || goomba.position.z < -maxBounding ? -1 : 1) * Math.sign(goombaDirection.z);
@@ -290,6 +298,20 @@ function handleEnemyCollision() {
         lookAtDirection(goomba, goombaDirection);
     }
     goomba.position.add(goombaDirection);
+}
+
+function handleCollisionWithEnemy() {
+    var dist = 1.61;
+    if( dollyCam.position.distanceTo(goomba.position) < dist) {
+        var x = Math.floor(Math.random() * maxBounding) - maxBounding;
+        var z = Math.floor(Math.random() * maxBounding) - maxBounding;
+        goomba.position.set(x, 0, z);
+        if (score > 0) {
+            score--;
+        }
+        updateScore();
+        powerdownAudio.play();
+    }
 }
 
 function onResize(e) {
