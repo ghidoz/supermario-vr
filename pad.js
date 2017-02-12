@@ -6,6 +6,7 @@ var keys = {
     moving: false
 };
 function onLoad() {
+    var isAndroid = /Android/i.test(navigator.userAgent);
     if (window.DeviceMotionEvent !== undefined) {
         window.ondevicemotion = function (event) {
             ax = Math.floor(event.accelerationIncludingGravity.x);
@@ -14,12 +15,12 @@ function onLoad() {
             document.getElementById('x').innerHTML = ax;
             document.getElementById('y').innerHTML = ay;
             document.getElementById('z').innerHTML = az;
-            if (ax < -4) {
+            if (isAndroid ? ax > 4 : ax < -4) {
                 if (!keys.left) {
                     keys.left = true;
                     updateMoving();
                 }
-            } else if (ax > 4) {
+            } else if (isAndroid ? ax < -4 : ax > 4) {
                 if (!keys.right) {
                     keys.right = true;
                     keys.left = false;
@@ -32,7 +33,7 @@ function onLoad() {
                     updateMoving();
                 }
             }
-            if (az < -4) {
+            if (isAndroid ? az > 4 : az < -4) {
                 if (!keys.forward) {
                     keys.forward = true;
                     keys.moving = true;
