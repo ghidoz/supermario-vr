@@ -8,3 +8,4 @@ Session.vim
 !node_modules
 .idea
 node_modules
+firebase-debug.log

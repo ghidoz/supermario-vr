@@ -14,6 +14,7 @@ var renderer;
 var scene;
 var coin;
 var goomba;
+var mushroom;
 var controls;
 var effect;
 var camera;
@@ -21,10 +22,12 @@ var dollyCam;
 var font;
 var score = 0;
 var scoreCounter;
+var poweredUp = false;
 // EnterVRButton for rendering enter/exit UI.
 var vrButton;
 var coinAudio;
 var powerdownAudio;
+var powerupAudio;
 var clock = new THREE.Clock();
 
 var keys = {
@@ -56,6 +59,7 @@ function onLoad() {
     addLights();
     addSceneElements();
     addEnemies();
+    addFellows();
     addScoreCounter();
 
     initWebVR();
@@ -121,6 +125,18 @@ function addEnemies() {
     });
 }
 
+function addFellows() {
+    var loader = new THREE.ColladaLoader();
+    loader.options.convertUpAxis = true;
+    loader.load('models/mushroom.dae', function (collada) {
+        mushroom = collada.scene;
+        var x = Math.floor(Math.random() * maxBounding) - maxBounding;
+        var z = Math.floor(Math.random() * maxBounding) - maxBounding;
+        mushroom.position.set(x, 0, z);
+        scene.add(mushroom);
+    });
+}
+
 function lookAtDirection(object, vector) {
     var lookAt = new THREE.Vector3();
     lookAt.addVectors(vector, object.position);
@@ -162,6 +178,7 @@ function addLights() {
 function loadSounds() {
     coinAudio = new Audio('sounds/coin.wav');
     powerdownAudio = new Audio('sounds/power-down.wav');
+    powerupAudio = new Audio('sounds/power-up.wav');
     coinAudio.addEventListener('play', function () {
         coinAudio.pause();
         coinAudio.removeEventListener('play', arguments.callee, false);
@@ -170,10 +187,15 @@ function loadSounds() {
         powerdownAudio.pause();
         powerdownAudio.removeEventListener('play', arguments.callee, false);
     }, false);
+    powerupAudio.addEventListener('play', function () {
+        powerupAudio.pause();
+        powerupAudio.removeEventListener('play', arguments.callee, false);
+    }, false);
     window.addEventListener("touchstart", function() {
         window.removeEventListener('touchstart', arguments.callee, false);
         coinAudio.play();
         powerdownAudio.play();
+        powerupAudio.play();
     }, false);
 }
 
@@ -265,6 +287,7 @@ function animate(timestamp) {
     handleGetCoin();
     handleEnemyWallCollision();
     handleCollisionWithEnemy();
+    handleGetMushroom();
 
     // Only update controls if we're presenting.
     if (vrButton.isPresenting()) {
@@ -300,6 +323,40 @@ function handleEnemyWallCollision() {
     goomba.position.add(goombaDirection);
 }
 
+function handleGetMushroom() {
+    var dist = 1.61;
+    if(mushroom && dollyCam.position.distanceTo(mushroom.position) < dist) {
+        scene.remove(mushroom);
+        powerUp();
+    }
+}
+
+function powerUp() {
+    if (!poweredUp) {
+        poweredUp = true;
+        powerupAudio.play();
+        MOVE_SPEED = 3;
+        skybox.material.color.setHex(0xff0000);
+        setTimeout(function () {
+            powerDown();
+        }, 10 * 1000);
+    }
+}
+
+function powerDown() {
+    if (poweredUp) {
+        poweredUp = false;
+        MOVE_SPEED = 1;
+        skybox.material.color.setHex(0x01BE00);
+        var x = Math.floor(Math.random() * maxBounding) - maxBounding;
+        var z = Math.floor(Math.random() * maxBounding) - maxBounding;
+        mushroom.position.set(x, 0, z);
+        setTimeout(function () {
+            scene.add(mushroom);
+        }, 10 * 1000);
+    }
+}
+
 function handleCollisionWithEnemy() {
     var dist = 1.61;
     if( dollyCam.position.distanceTo(goomba.position) < dist) {
@@ -311,6 +368,7 @@ function handleCollisionWithEnemy() {
         }
         updateScore();
         powerdownAudio.play();
+        powerDown();
     }
 }
 
