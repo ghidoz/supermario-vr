@@ -128,8 +128,8 @@ function lookAtDirection(object, vector) {
 }
 
 function addLights() {
-    var hemisphereLight, shadowLight;
-    hemisphereLight = new THREE.HemisphereLight(0xaaaaaa,0x000000, .9)
+    var ambientLight, shadowLight;
+    ambientLight = new THREE.AmbientLight( 0x404040 );
 
     // A directional light shines from a specific direction.
     // It acts like the sun, that means that all the rays produced are parallel.
@@ -155,7 +155,7 @@ function addLights() {
     shadowLight.shadow.mapSize.height = 2048;
 
     // to activate the lights, just add them to the scene
-    scene.add(hemisphereLight);
+    scene.add(ambientLight);
     scene.add(shadowLight);
 }
 
